@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Things to do near Tower of London — Embed (v32)</title>
+
+<!-- Performance preconnects for faster embeds -->
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<link rel="preconnect" href="https://source.unsplash.com" crossorigin>
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
+<link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossorigin>
+
+<!-- Leaflet CSS (dual-CDN fallback) -->
+<link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+<script>
+(function(){
+  const css = document.getElementById('leaflet-css');
+  let tried = false;
+  css.addEventListener('error', function(){
+    if(tried) return;
+    tried = true;
+    const alt = document.createElement('link');
+    alt.rel = 'stylesheet';
+    alt.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(alt);
+  });
+})();
+</script>
+
+<style>
+  html, body, #map { height: 100%; margin: 0; }
+  .legend {
+    position: absolute; bottom: 16px; left: 16px; z-index: 1000;
+    background: rgba(255,255,255,.95); border: 1px solid #e5e7eb;
+    border-radius: 10px; padding: 10px; font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    box-shadow: 0 8px 18px rgba(0,0,0,.12); backdrop-filter: blur(6px);
+  }
+  .legend h3 { margin: 0 0 6px 0; font-size: 13px; color:#111827; }
+  .legend .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .legend .grid button {
+    background:#f3f4f6; border:1px solid #e5e7eb; border-radius:999px; padding:.35rem .55rem; cursor:pointer; text-align:left;
+  }
+  .legend .grid button.active { background:#111827; color:#fff; border-color:#111827; }
+  .legend .actions { display:flex; gap:6px; margin-top:8px; }
+  .legend .actions button { flex:1; padding:.35rem .55rem; border-radius:8px; border:1px solid #e5e7eb; cursor:pointer; }
+  .legend .clear { background:#ef4444; border-color:#ef4444; color:#fff; }
+  .emoji { font-size: 20px; }
+  .hl { transform: translateY(-3px) scale(1.15); filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+  .leaflet-tooltip.name-label {
+    background:#fff; border:1px solid #e5e7eb; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    padding:2px 6px; font-size:12px; color:#111827;
+  }
+  .popup-card { width:min(360px, 86vw); }
+  .popup-card img { width:100%; height:160px; object-fit:cover; border-radius:10px; margin:6px 0; }
+  .meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .meta div { background:#f3f4f6; border-radius:8px; padding:6px 8px; font-size:.9rem; }
+  .ticket { margin:.45rem 0; font-weight:700; }
+  .cta { display:block; text-align:center; margin-top:8px; background:#111827; color:#fff; text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600; }
+  .nearby { margin-top:6px; padding-top:6px; border-top:1px dashed #e5e7eb; max-height:180px; overflow:auto; }
+  .nearby h4 { margin:6px 0; font-size:.95rem; }
+  .nearby ul { list-style:none; padding:0; margin:0; }
+  .nearby li { padding:4px 0; font-size:.95rem; cursor:pointer; }
+  .attrib { position: absolute; right: 8px; bottom: 4px; z-index: 500; font: 11px ui-sans-serif, system-ui; background: rgba(255,255,255,.85); padding:2px 6px; border-radius:6px; border:1px solid #e5e7eb; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="legend">
+  <h3>Filter & highlight</h3>
+  <div id="legend-grid" class="grid"></div>
+  <div class="actions">
+    <button class="clear" id="clear">Clear</button>
+    <button id="fit">Fit all</button>
+  </div>
+</div>
+<div class="attrib">© OpenStreetMap contributors • © CARTO • Images: Wikimedia Commons & Unsplash (open license)</div>
+
+<!-- Leaflet JS with dual-CDN fallback -->
+<script>
+(function loadLeaflet(){
+  function inject(src){
+    var s=document.createElement('script');
+    s.src=src; s.async=false; s.crossOrigin='anonymous';
+    s.onload=init; s.onerror=next; document.head.appendChild(s);
+  }
+  var tried=0, urls=[
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+    'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
+  ];
+  function next(){ if(++tried<urls.length) inject(urls[tried]); else fail(); }
+  function fail(){ console.warn('Leaflet could not load from any CDN.'); }
+  function init(){
+    if(!window.L) { next(); return; }
+    startMap();
+  }
+  inject(urls[0]);
+})();
+</script>
+
+<script>
+function startMap(){
+  // Utilities
+  const toRad = x => x * Math.PI / 180;
+  function haversineKm(a,b){
+    const R=6371, dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
+    const A = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
+    return 2*R*Math.atan2(Math.sqrt(A),Math.sqrt(1-A));
+  }
+  const walkMins = km => Math.round(km*12);
+  const wm = name => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name)}?width=640`;
+  const unsp = q => `https://source.unsplash.com/640x360/?${encodeURIComponent(q)}`;
+
+  // Map
+  const map = L.map('map', { zoomControl: true }).setView([51.5081201, -0.0762226], 15);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains: 'abcd',
+    attribution: '© OpenStreetMap contributors • © CARTO'
+  }).addTo(map);
+
+  // Data
+  const CAT = { Main:'🏰', Museum:'🖼️', Park:'🌳', Dining:'🍴', Landmark:'🏛️', Bridge:'🌉', Street:'🛍️', Cruise:'⛴️', Theatre:'🎭' };
+
+  const MAIN = { name:'Tower of London', cat:'Main', lat:51.5081201, lon:-0.0762226, free:false,
+    desc:'A royal fortress where the Crown Jewels sparkle and the ravens rule.',
+    usp:'Crown Jewels & Yeoman Warder tours.',
+    how:'Timed tickets recommended; go early or late to avoid queues.',
+    transport:'Walk from Tower Hill; Circle/District line to Tower Hill, DLR to Tower Gateway.',
+    cta:'https://www.london-tickets.co.uk/tower-of-london/',
+    img: wm('Tower_of_London_viewed_from_the_River_Thames.jpg')
+  };
+
+  const PLACES = [
+    {name:'Tower Bridge', lat:51.5055, lon:-0.0754, cat:'Bridge', free:false, cta:'https://www.london-tickets.co.uk/tower-bridge/',
+     desc:'London’s postcard bridge — watch the roadways lift and stride the glass floor.', usp:'Glass-floor walkway & dramatic lifts.', how:'Pre-book the Exhibition for glass-floor walks.', transport:'5–10 min walk from the Tower.',
+     img: wm('Tower_Bridge,_August_2014.jpg') },
+    {name:'St Katharine Docks', lat:51.5072, lon:-0.07122, cat:'Street', free:true,
+     desc:'Hidden marina of cafes and waterside pubs behind the Tower.', usp:'Quiet waterfront minutes from the crowds.', how:'Wander the quays; best at golden hour.', transport:'5–8 min walk from the Tower.',
+     img: wm('St_Katharine_Docks_London.jpg') },
+    {name:'Sky Garden (20 Fenchurch St)', lat:51.511177, lon:-0.083094, cat:'Landmark', free:true,
+     desc:'Indoor jungle with sweeping skyline views inside the Walkie‑Talkie.', usp:'Free views amid tropical plants.', how:'Free but timed tickets release weekly.', transport:'15–18 min walk; Monument tube nearby.',
+     img: wm('Sky_Garden,_20_Fenchurch_Street.jpg') },
+    {name:'Leadenhall Market', lat:51.5134, lon:-0.0840, cat:'Street', free:true,
+     desc:'Ornate Victorian arcades lined with boutiques and bites.', usp:'Gorgeously painted ironwork.', how:'Best on weekdays when traders are open.', transport:'15–18 min walk via Gracechurch St.',
+     img: wm('Leadenhall_Market,_2022.jpg') },
+    {name:'Monument to the Great Fire', lat:51.5106, lon:-0.0865, cat:'Landmark', free:false,
+     desc:'Wren’s Doric column with 311 steps to skyline panoramas.', usp:'Historic climb with certificate.', how:'Buy at base; mornings are quieter.', transport:'15 min walk; Monument tube.',
+     img: wm('Monument_London_2009.jpg') },
+    {name:'Borough Market', lat:51.5055, lon:-0.0911, cat:'Street', free:true,
+     desc:'Centuries‑old market of artisan produce and sizzling street‑food.', usp:'London’s tastiest market.', how:'Arrive before noon for shorter queues.', transport:'20–22 min walk; London Bridge tube.',
+     img: wm('Borough_Market_Interior.jpg') },
+    {name:'Tower Millennium Pier (Thames Cruise)', lat:51.507895, lon:-0.081637, cat:'Cruise', free:false,
+      desc:'Jump‑off point for speedy, scenic river cruises.', usp:'Fast transit with skyline views.', how:'Buy cruise tickets at the pier or online.', transport:'4–6 min walk from the Tower.',
+      img: wm('Tower_Millennium_Pier.JPG') },
+    {name:'All Hallows by the Tower', lat:51.509046, lon:-0.079594, cat:'Landmark', free:true,
+     desc:'The City’s oldest church (AD 675) with a peaceful nave and crypt.', usp:'Rare Saxon arch.', how:'Check service times; donate if you can.', transport:'5 min walk; Tower Hill/Monument nearby.',
+     img: wm('All_Hallows_by_the_Tower.jpg') },
+    {name:'London Mithraeum (Temple of Mithras)', lat:51.51248, lon:-0.09064, cat:'Museum', free:true,
+     desc:'Roman temple beneath Bloomberg HQ, revived with sound and light.', usp:'Immersive free dive into Londinium.', how:'Reserve a free slot online for peak times.', transport:'18–20 min walk; Bank/Monument tube.',
+     img: wm('London_Mithraeum_2017.jpg') },
+    {name:'HMS Belfast (IWM)', lat:51.5066, lon:-0.0817, cat:'Museum', free:false,
+     desc:'Explore nine decks of a WWII cruiser moored on the Thames.', usp:'Bridge, guns & engine rooms.', how:'Pre‑book to skip queues on weekends.', transport:'12–15 min walk via Tower Bridge.',
+     img: wm('HMS_Belfast_(C35)_02.jpg') },
+    {name:'Bank of England Museum', lat:51.51389, lon:-0.08833, cat:'Museum', free:true,
+     desc:'Story of money with a real gold bar to lift.', usp:'Free, interactive galleries.', how:'Open Mon–Fri; check hours.', transport:'Bank tube (Central/Northern/DLR).',
+     img: wm('Bank_of_England_London.jpg') },
+    {name:'Clink Prison Museum', lat:51.5069, lon:-0.0920105, cat:'Museum', free:false,
+     desc:'Gritty look at medieval punishment on Southwark’s riverside.', usp:'Atmospheric cells & artefacts.', how:'Buy on site/online; later evenings are quieter.', transport:'London Bridge tube; 18–20 min walk.',
+     img: wm('The_Clink_Prison_Museum.jpg') },
+    {name:'Museum of London Docklands', lat:51.507640, lon:-0.023968, cat:'Museum', free:true,
+     desc:'Warehouses turned museum of London’s river, docks & trade.', usp:'Family‑friendly — and free.', how:'DLR to West India Quay; allow 1.5–2 hours.', transport:'DLR from Tower Gateway (fastest).',
+     img: wm('Museum_of_London_Docklands_exterior.jpg') },
+    {name:'Tate Modern', lat:51.5076, lon:-0.0994, cat:'Museum', free:false, cta:'https://www.london-tickets.co.uk/tate-modern/',
+     desc:'Modern art powerhouse inside a soaring former power station.', usp:'Epic Turbine Hall.', how:'Special exhibitions ticketed; arrive early for the hall.', transport:'20–25 min walk across Millennium Bridge.',
+     img: wm("Tate_Modern_from_St_Paul's.jpg") },
+    {name:'Design Museum', lat:51.499935, lon:-0.200355, cat:'Museum', free:true,
+     desc:'Sleek temple to product, fashion & graphic design.', usp:'Free permanent gallery.', how:'Check current exhibitions.', transport:'Tube to High Street Kensington; longer from Tower.' },
+    {name:'Garden at 120', lat:51.51105, lon:-0.08179, cat:'Park', free:true,
+     desc:'Open‑air rooftop with 360° City views — and no ticket barrier.', usp:'Free, no‑book skyline lookout.', how:'Walk‑in access; security screening.', transport:'10–12 min walk; Fenchurch St.',
+     img: wm('120_Fenchurch_Street_roof_garden.jpg') },
+    {name:'Millennium Bridge', lat:51.5106, lon:-0.0983, cat:'Bridge', free:true,
+     desc:'Pedestrian link between St Paul’s and Tate — once the “wobbly” bridge.', usp:'Iconic Thames photo‑op.', how:'Pair with St Paul’s or Tate.', transport:'20–22 min walk from the Tower.',
+     img: wm('Millennium_Bridge_London.jpg') },
+    {name:'Horizon 22', lat:51.5146, lon:-0.0815, cat:'Landmark', free:true,
+     desc:'The City’s highest free viewing platform.', usp:'Sky‑high views for £0.', how:'Timed tickets recommended; some walk‑ins.', transport:'20 min walk; Bank/Monument area.',
+     img: wm('22_Bishopsgate_2020.jpg') },
+    {name:'The Shard', lat:51.5048, lon:-0.0865, cat:'Landmark', free:false, cta:'https://www.theshardtickets.co.uk/',
+     desc:'London’s tallest skyscraper and its viewing floors.', usp:'Highest paid view in the city.', how:'Pre‑book sunset slots.', transport:'London Bridge station nearby.',
+     img: wm('The_Shard_from_The_Sky_Garden_2015.jpg') },
+    {name:'Blackfriars Bridge', lat:51.5106, lon:-0.1040, cat:'Bridge', free:true,
+     desc:'A broad road bridge with sweeping sunset views to the South Bank.', usp:'Golden‑hour vantage point.', how:'Best at dusk on clear days.', transport:'Best combined with a South Bank walk.',
+     img: wm('Blackfriars_Bridge_London.jpg') },
+    {name:'Whitechapel Gallery', lat:51.5156, lon:-0.0707, cat:'Museum', free:true,
+     desc:'East End contemporary art landmark near Aldgate East.', usp:'Bold, timely exhibitions.', how:'Check current show — free areas available.', transport:'Aldgate East tube; 15–18 min walk.',
+     img: wm('Whitechapel_Gallery_2009.jpg') },
+    {name:'Trinity Square Gardens', lat:51.5089, lon:-0.0785, cat:'Park', free:true,
+     desc:'Quiet memorial garden opposite the Tower.', usp:'Tranquil pause with City views.', how:'Perfect for a short breather.', transport:'2–3 min walk from the Tower.',
+     img: wm('Tower_Hill_War_Memorial.jpg') },
+    {name:'St Dunstan in the East Church Garden', lat:51.5103, lon:-0.0834, cat:'Park', free:true,
+     desc:'Bombed‑out Wren church turned a romantic garden.', usp:'Ruins wrapped in greenery.', how:'Go early for hush; popular for photos.', transport:'10–12 min walk via Great Tower St.',
+     img: wm('St_Dunstan_in_the_East_Church_Garden.jpg') },
+    {name:'Potters Fields Park', lat:51.5049, lon:-0.0764, cat:'Park', free:true,
+     desc:'Grassy riverfront opposite the Tower by City Hall.', usp:'Front‑row Tower Bridge views.', how:'Great picnic spot; events often on.', transport:'10–12 min walk across the bridge.',
+     img: wm('Potters_Fields_Park_2012.jpg') },
+    {name:'Postman’s Park', lat:51.5172, lon:-0.0976, cat:'Park', free:true,
+     desc:'Shady garden famed for its Watts Heroic Self‑Sacrifice Memorial.', usp:'Poignant tiled tributes.', how:'Pair with St Paul’s area.', transport:'St Paul’s tube; 25 min walk.',
+     img: wm('Postmans_park_2004-06-26.jpg') },
+    {name:'Trinity Square', lat:51.5096, lon:-0.0790, cat:'Street', free:true,
+     desc:'Grand civic space framed by Port of London Authority building.', usp:'Period architecture & memorials.', how:'Cut‑through between Tower Hill & the river.', transport:'2–4 min walk from the Tower.' },
+    {name:'Shad Thames', lat:51.5048, lon:-0.0738, cat:'Street', free:true,
+     desc:'Cobbled Victorian warehouses with iron sky‑bridges.', usp:'Atmospheric riverside lanes.', how:'Best for golden‑hour strolls and photos.', transport:'12–15 min walk across Tower Bridge.',
+     img: wm('Shad_Thames.jpg') },
+    {name:'Borough High Street', lat:51.5043, lon:-0.0928, cat:'Street', free:true,
+     desc:'Historic spine of Southwark leading to Borough Market.', usp:'Pubs, eateries and market access.', how:'Walk from London Bridge.', transport:'20–22 min walk from the Tower.' },
+    {name:'Paternoster Square', lat:51.5142, lon:-0.0996, cat:'Street', free:true,
+     desc:'Modern piazza behind St Paul’s with Temple Bar Gate.', usp:'Calm square with cafes.', how:'Combine with St Paul’s & Millennium Bridge.', transport:'St Paul’s tube; 25 min walk.',
+     img: wm('Paternoster_Square,_London_2011.jpg') },
+    {name:'Brick Lane', lat:51.5205, lon:-0.0714, cat:'Street', free:true,
+     desc:'Street‑art hotbed and curry mile in the East End.', usp:'Markets, murals and bagels.', how:'Best on weekends when markets pop up.', transport:'Shoreditch High St Overground; 25–30 min walk.',
+     img: wm('Brick_Lane_Sunday_Market.jpg') },
+    {name:'Bridge Theatre', lat:51.5058, lon:-0.0803, cat:'Theatre', free:true,
+     desc:'Modern riverside theatre near Tower Bridge.', usp:'Bold contemporary productions.', how:'Check programme; book ahead for hits.', transport:'12–15 min walk via Tower Bridge.',
+     img: wm('Bridge_Theatre_2018.jpg') },
+
+    // Dining (add reservation flags only; images only when we have a reliable, licensed source)
+    {name:'Coppa Club – Tower Bridge Igloos', lat:51.50798, lon:-0.08169, cat:'Dining', reservationNeeded:'recommended',
+     desc:'Riverside dining with seasonal glass igloos facing Tower Bridge.', usp:'Cosy domes, blockbuster views.', how:'Reserve ahead for igloos.', transport:'6–8 min walk via Lower Thames St.' },
+    {name:'Bravas Tapas (St Katharine Docks)', lat:51.50708, lon:-0.0709, cat:'Dining', reservationNeeded:'recommended',
+     desc:'Intimate waterside tapas with bold Spanish flavours.', usp:'Creative small plates by the marina.', how:'Book dinner; terrace if weather allows.', transport:'8–10 min walk (St Katharine Docks).' },
+    {name:'The Dickens Inn', lat:51.5067525, lon:-0.0702178, cat:'Dining', reservationNeeded:'recommended',
+     desc:'Flower‑decked 18th‑century pub with balconies and dock views.', usp:'Character pub with space for groups.', how:'Popular weekends — book ahead.', transport:'8–10 min walk (St Katharine Docks).',
+     img: wm('Dickens_Inn_St_Katharine_Docks.jpg') },
+    {name:'Hung, Drawn & Quartered (Fuller’s)', lat:51.509660, lon:-0.080655, cat:'Dining', reservationNeeded:'not needed',
+     desc:'Classic City pub named for grim Tower history — now pies and pints.', usp:'Hearty British comfort food.', how:'Busy after work; arrive early for seats.', transport:'5–7 min walk up Great Tower St.',
+     img: wm('Hung,_Drawn_&_Quartered_pub,_London.jpg') },
+    {name:'Darwin Brasserie (Sky Garden)', lat:51.511177, lon:-0.083094, cat:'Dining', reservationNeeded:'recommended',
+     desc:'Sky‑high brasserie inside the Sky Garden.', usp:'Big views with brunch.', how:'Request a window table when booking.', transport:'15–18 min walk (20 Fenchurch St).' },
+    {name:'Duck & Waffle', lat:51.51755, lon:-0.08042, cat:'Dining', reservationNeeded:'required',
+     desc:'24/7 sky‑restaurant famed for crispy duck on a waffle.', usp:'Open late; killer signature dish.', how:'Dress smart‑casual; book ahead.', transport:'Liverpool St area; short tube/20+ min walk.' },
+    {name:'Dishoom Shoreditch', lat:51.5233, lon:-0.0746, cat:'Dining', reservationNeeded:'recommended',
+     desc:'Bombay‑style café with legendary breakfast and grills.', usp:'The cult‑favourite bacon naan.', how:'Expect queues at peak; try breakfast.', transport:'Shoreditch High St; tube/Overground or 25+ min walk.' },
+  ];
+
+  // Markers & popups
+  const markers = [];
+  const emojiIcon = (emoji)=> L.divIcon({ className:'', html:`<div class="emoji">${emoji}</div>`, iconSize:[24,24], iconAnchor:[12,24] });
+
+  const all = [{...MAIN}, ...PLACES];
+
+  function imgBlock(url, alt){
+    if(!url) return ''; // OMIT if not available
+    const esc = String(url).replace(/"/g,'&quot;');
+    return `<img src="${esc}" alt="${alt}" onerror="this.parentNode.removeChild(this)">`;
+  }
+
+  all.forEach(p => {
+    const marker = L.marker([p.lat, p.lon], { title: p.name, icon: emojiIcon(CAT[p.cat] || '📍') }).addTo(map);
+    marker.meta = p;
+    marker.category = p.cat;
+    marker.bindTooltip(`${CAT[p.cat]||'📍'} ${p.name}`, { direction:'top', className:'name-label', permanent:false, offset:[0,-6] });
+    const fromMainKm = haversineKm({lat:all[0].lat,lon:all[0].lon},{lat:p.lat,lon:p.lon});
+    const ticketLine = (p.cat === 'Dining')
+      ? `<div class="ticket">Reservations : <span>${p.reservationNeeded || 'check venue'}</span></div>`
+      : `<div class="ticket">Ticketed or free : <span>${(p.cta || !p.free)?'ticketed':'free'}</span></div>`;
+    const ctaBtn = (p.cat === 'Dining')
+      ? (p.reservationUrl ? `<a class="cta" href="${p.reservationUrl}" target="_blank" rel="noopener">Reserve a table</a>` : '')
+      : (p.cta ? `<a class="cta" href="${p.cta}" target="_blank" rel="noopener">Book tickets</a>` : '');
+    const gallery = imgBlock(p.img, p.name);
+    const popupHTML = `
+      <div class="popup-card">
+        ${gallery}
+        <h3 style="margin:.25rem 0;">${CAT[p.cat]||'📍'} ${p.name}</h3>
+        <p><strong>Description:</strong> ${p.desc || '—'}</p>
+        ${p.usp ? `<p><strong>USP:</strong> ${p.usp}</p>` : ''}
+        <div class="meta">
+          <div><strong>From Tower:</strong><br>${fromMainKm.toFixed(2)} km • ${walkMins(fromMainKm)} min</div>
+          <div><strong>Visit tips:</strong><br>${p.how || '—'}</div>
+        </div>
+        ${ticketLine}
+        <p><strong>Best way from Tower:</strong> ${p.transport || '—'}</p>
+        ${ctaBtn}
+        ${nearbyHTML(p)}
+      </div>`;
+    marker.bindPopup(popupHTML, { maxWidth: 380, closeButton: true });
+    marker.on('click', () => { marker.openPopup(); });
+    markers.push(marker);
+  });
+
+  function nearbyHTML(p){
+    const here = { lat:p.lat, lon:p.lon };
+    const list = all.filter(q => q.name !== p.name)
+      .map(q => ({ q, d: haversineKm(here, {lat:q.lat, lon:q.lon}) }))
+      .sort((a,b)=>a.d-b.d).slice(0,12);
+    const items = list.map(o => `<li data-name="${o.q.name}">${CAT[o.q.cat]||'📍'} <strong>${o.q.name}</strong> — ${o.d.toFixed(2)} km • ${walkMins(o.d)} min</li>`).join('');
+    return `<div class="nearby"><h4>Nearby (sorted by distance)</h4><ul>${items}</ul></div>`;
+  }
+
+  map.on('popupopen', (e) => {
+    const node = e.popup.getElement();
+    node.querySelectorAll('.nearby li').forEach(li => {
+      li.addEventListener('click', () => {
+        const name = li.getAttribute('data-name');
+        const target = markers.find(m => m.meta.name === name);
+        if (target){
+          map.setView(target.getLatLng(), Math.max(map.getZoom(), 16));
+          target.openPopup();
+        }
+      });
+    });
+  });
+
+  // Legend
+  const legendGrid = document.getElementById('legend-grid');
+  const btns = {};
+  Object.keys(CAT).forEach(cat => {
+    const b = document.createElement('button');
+    b.textContent = `${CAT[cat]} ${cat==='Street'?'Streets/Squares':(cat + (cat==='Museum'?'s':''))}`;
+    b.addEventListener('click', () => {
+      Object.values(btns).forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      map.closePopup();
+      const highlights = [];
+      markers.forEach(m => {
+        const on = (m.category === cat) || (m.category === 'Main' && cat === 'Main');
+        const iconEl = m.getElement();
+        if (iconEl){ iconEl.classList.toggle('hl', on); }
+        if (on){
+          m.setTooltipContent(`${CAT[m.category]||'📍'} ${m.meta.name}`);
+          m.openTooltip();
+          highlights.push(m);
+        } else {
+          if (m.isTooltipOpen()) m.closeTooltip();
+        }
+      });
+      if (highlights.length){
+        const g = L.featureGroup(highlights);
+        map.fitBounds(g.getBounds().pad(0.25));
+      }
+    });
+    legendGrid.appendChild(b);
+    btns[cat]=b;
+  });
+
+  document.getElementById('clear').addEventListener('click', () => {
+    Object.values(btns).forEach(x=>x.classList.remove('active'));
+    markers.forEach(m => {
+      const iconEl = m.getElement();
+      if (iconEl) iconEl.classList.remove('hl');
+      if (m.isTooltipOpen()) m.closeTooltip();
+    });
+    map.closePopup();
+  });
+
+  document.getElementById('fit').addEventListener('click', () => {
+    const g = L.featureGroup(markers);
+    map.fitBounds(g.getBounds().pad(0.25));
+  });
+}
+</script>
+</body>
+</html>
