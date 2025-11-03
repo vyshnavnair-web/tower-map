@@ -2,87 +2,126 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Things to do near Tower of London — Embed (v32)</title>
-
-<!-- Performance preconnects for faster embeds -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Things to do near Tower of London — Responsive v33</title>
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
-<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
-<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-<link rel="preconnect" href="https://source.unsplash.com" crossorigin>
 <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
 <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
 <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
 <link rel="preconnect" href="https://d.basemaps.cartocdn.com" crossorigin>
-
-<!-- Leaflet CSS (dual-CDN fallback) -->
+<link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<link rel="preconnect" href="https://source.unsplash.com" crossorigin>
 <link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script>
 (function(){
   const css = document.getElementById('leaflet-css');
-  let tried = false;
+  let tried=false;
   css.addEventListener('error', function(){
     if(tried) return;
-    tried = true;
-    const alt = document.createElement('link');
-    alt.rel = 'stylesheet';
-    alt.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+    tried=true;
+    const alt=document.createElement('link');
+    alt.rel='stylesheet';
+    alt.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
     document.head.appendChild(alt);
   });
 })();
 </script>
-
 <style>
-  html, body, #map { height: 100%; margin: 0; }
+  :root{
+    --panel-bg: rgba(255,255,255,.97);
+    --border: #e5e7eb;
+    --shadow: 0 8px 18px rgba(0,0,0,.12);
+    --text: #111827;
+  }
+  html, body { height:100%; margin:0; }
+  #map { position:fixed; inset:0; }
   .legend {
     position: absolute; bottom: 16px; left: 16px; z-index: 1000;
-    background: rgba(255,255,255,.95); border: 1px solid #e5e7eb;
-    border-radius: 10px; padding: 10px; font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    box-shadow: 0 8px 18px rgba(0,0,0,.12); backdrop-filter: blur(6px);
+    background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px; font: 13px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    box-shadow: var(--shadow); backdrop-filter: blur(6px);
   }
-  .legend h3 { margin: 0 0 6px 0; font-size: 13px; color:#111827; }
+  .legend h3 { margin: 0 0 6px 0; font-size: 13px; color:var(--text); }
   .legend .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .legend .grid button {
-    background:#f3f4f6; border:1px solid #e5e7eb; border-radius:999px; padding:.35rem .55rem; cursor:pointer; text-align:left;
+    background:#f3f4f6; border:1px solid var(--border); border-radius:999px; padding:.35rem .55rem; cursor:pointer; text-align:left;
   }
   .legend .grid button.active { background:#111827; color:#fff; border-color:#111827; }
   .legend .actions { display:flex; gap:6px; margin-top:8px; }
-  .legend .actions button { flex:1; padding:.35rem .55rem; border-radius:8px; border:1px solid #e5e7eb; cursor:pointer; }
+  .legend .actions button { flex:1; padding:.4rem .6rem; border-radius:8px; border:1px solid var(--border); cursor:pointer; }
   .legend .clear { background:#ef4444; border-color:#ef4444; color:#fff; }
   .emoji { font-size: 20px; }
   .hl { transform: translateY(-3px) scale(1.15); filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
   .leaflet-tooltip.name-label {
-    background:#fff; border:1px solid #e5e7eb; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.12);
+    background:#fff; border:1px solid var(--border); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.12);
     padding:2px 6px; font-size:12px; color:#111827;
   }
   .popup-card { width:min(360px, 86vw); }
-  .popup-card img { width:100%; height:160px; object-fit:cover; border-radius:10px; margin:6px 0; }
+  .popup-card img { width:100%; height:180px; object-fit:cover; border-radius:10px; margin:6px 0; }
   .meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
   .meta div { background:#f3f4f6; border-radius:8px; padding:6px 8px; font-size:.9rem; }
   .ticket { margin:.45rem 0; font-weight:700; }
   .cta { display:block; text-align:center; margin-top:8px; background:#111827; color:#fff; text-decoration:none; padding:8px 10px; border-radius:8px; font-weight:600; }
-  .nearby { margin-top:6px; padding-top:6px; border-top:1px dashed #e5e7eb; max-height:180px; overflow:auto; }
+  .nearby { margin-top:6px; padding-top:6px; border-top:1px dashed var(--border); max-height:180px; overflow:auto; }
   .nearby h4 { margin:6px 0; font-size:.95rem; }
   .nearby ul { list-style:none; padding:0; margin:0; }
   .nearby li { padding:4px 0; font-size:.95rem; cursor:pointer; }
-  .attrib { position: absolute; right: 8px; bottom: 4px; z-index: 500; font: 11px ui-sans-serif, system-ui; background: rgba(255,255,255,.85); padding:2px 6px; border-radius:6px; border:1px solid #e5e7eb; }
+  .attrib { position: absolute; right: 8px; bottom: 4px; z-index: 500; font: 11px ui-sans-serif, system-ui; background: rgba(255,255,255,.85); padding:2px 6px; border-radius:6px; border:1px solid var(--border); }
+  .open-sheet-btn{
+    display:none; position:fixed; left:12px; bottom:12px; z-index:1001;
+    background:#111827; color:#fff; border:none; border-radius:999px;
+    padding:.6rem .9rem; font: 14px ui-sans-serif, system-ui; box-shadow:var(--shadow);
+  }
+  .sheet{
+    display:none; position:fixed; left:0; right:0; bottom:0; z-index:1002;
+    background:var(--panel-bg); border-top-left-radius:14px; border-top-right-radius:14px; border:1px solid var(--border);
+    box-shadow: 0 -10px 30px rgba(0,0,0,.18);
+  }
+  .sheet .grab{ width:44px; height:4px; background:#d1d5db; border-radius:999px; margin:8px auto 4px; }
+  .sheet .inner{ padding:10px 12px 12px; }
+  .sheet h3{ margin:0 0 8px; font:600 14px ui-sans-serif,system-ui; }
+  .sheet .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .sheet .grid button{
+    background:#f3f4f6; border:1px solid var(--border); border-radius:999px; padding:.5rem .7rem; text-align:left; font-size:14px;
+  }
+  .sheet .grid button.active{ background:#111827; color:#fff; border-color:#111827; }
+  .sheet .actions{ display:flex; gap:8px; margin-top:10px; }
+  .sheet .actions button{ flex:1; padding:.55rem .7rem; border-radius:10px; border:1px solid var(--border); }
+  .sheet .clear{ background:#ef4444; color:#fff; border-color:#ef4444; }
+  @media (max-width: 767px){
+    .legend{ display:none; }
+    .open-sheet-btn{ display:block; }
+    .popup-card img{ height: 160px; }
+    .leaflet-control-zoom{ display:none; }
+  }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div class="legend">
+<div class="legend" id="legend-desktop">
   <h3>Filter & highlight</h3>
-  <div id="legend-grid" class="grid"></div>
+  <div id="legend-grid-desktop" class="grid"></div>
   <div class="actions">
-    <button class="clear" id="clear">Clear</button>
-    <button id="fit">Fit all</button>
+    <button class="clear" id="clear-desktop">Clear</button>
+    <button id="fit-desktop">Fit all</button>
+  </div>
+</div>
+<button class="open-sheet-btn" id="openSheet">☰ Categories</button>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <div class="inner">
+    <h3>Filter & highlight</h3>
+    <div id="legend-grid-mobile" class="grid"></div>
+    <div class="actions">
+      <button class="clear" id="clear-mobile">Clear</button>
+      <button id="fit-mobile">Fit all</button>
+    </div>
   </div>
 </div>
 <div class="attrib">© OpenStreetMap contributors • © CARTO • Images: Wikimedia Commons & Unsplash (open license)</div>
-
-<!-- Leaflet JS with dual-CDN fallback -->
 <script>
 (function loadLeaflet(){
   function inject(src){
@@ -94,19 +133,13 @@
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
     'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
   ];
-  function next(){ if(++tried<urls.length) inject(urls[tried]); else fail(); }
-  function fail(){ console.warn('Leaflet could not load from any CDN.'); }
-  function init(){
-    if(!window.L) { next(); return; }
-    startMap();
-  }
+  function next(){ if(++tried<urls.length) inject(urls[tried]); else console.warn('Leaflet failed to load.'); }
+  function init(){ if(!window.L){ next(); return; } startMap(); }
   inject(urls[0]);
 })();
 </script>
-
 <script>
 function startMap(){
-  // Utilities
   const toRad = x => x * Math.PI / 180;
   function haversineKm(a,b){
     const R=6371, dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
@@ -117,14 +150,13 @@ function startMap(){
   const wm = name => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name)}?width=640`;
   const unsp = q => `https://source.unsplash.com/640x360/?${encodeURIComponent(q)}`;
 
-  // Map
-  const map = L.map('map', { zoomControl: true }).setView([51.5081201, -0.0762226], 15);
+  const map = L.map('map', { zoomControl: false }).setView([51.5081201, -0.0762226], 15);
+  L.control.zoom({ position: (window.innerWidth<768?'bottomright':'topleft') }).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19, subdomains: 'abcd',
     attribution: '© OpenStreetMap contributors • © CARTO'
   }).addTo(map);
 
-  // Data
   const CAT = { Main:'🏰', Museum:'🖼️', Park:'🌳', Dining:'🍴', Landmark:'🏛️', Bridge:'🌉', Street:'🛍️', Cruise:'⛴️', Theatre:'🎭' };
 
   const MAIN = { name:'Tower of London', cat:'Main', lat:51.5081201, lon:-0.0762226, free:false,
@@ -228,7 +260,6 @@ function startMap(){
      desc:'Modern riverside theatre near Tower Bridge.', usp:'Bold contemporary productions.', how:'Check programme; book ahead for hits.', transport:'12–15 min walk via Tower Bridge.',
      img: wm('Bridge_Theatre_2018.jpg') },
 
-    // Dining (add reservation flags only; images only when we have a reliable, licensed source)
     {name:'Coppa Club – Tower Bridge Igloos', lat:51.50798, lon:-0.08169, cat:'Dining', reservationNeeded:'recommended',
      desc:'Riverside dining with seasonal glass igloos facing Tower Bridge.', usp:'Cosy domes, blockbuster views.', how:'Reserve ahead for igloos.', transport:'6–8 min walk via Lower Thames St.' },
     {name:'Bravas Tapas (St Katharine Docks)', lat:51.50708, lon:-0.0709, cat:'Dining', reservationNeeded:'recommended',
@@ -247,23 +278,28 @@ function startMap(){
      desc:'Bombay‑style café with legendary breakfast and grills.', usp:'The cult‑favourite bacon naan.', how:'Expect queues at peak; try breakfast.', transport:'Shoreditch High St; tube/Overground or 25+ min walk.' },
   ];
 
-  // Markers & popups
-  const markers = [];
+  const markers=[];
   const emojiIcon = (emoji)=> L.divIcon({ className:'', html:`<div class="emoji">${emoji}</div>`, iconSize:[24,24], iconAnchor:[12,24] });
-
-  const all = [{...MAIN}, ...PLACES];
+  const all=[{...MAIN}, ...PLACES];
 
   function imgBlock(url, alt){
-    if(!url) return ''; // OMIT if not available
-    const esc = String(url).replace(/"/g,'&quot;');
-    return `<img src="${esc}" alt="${alt}" onerror="this.parentNode.removeChild(this)">`;
+    if(!url) return '';
+    const safe = String(url).replace(/"/g,'&quot;');
+    return `<img src="${safe}" alt="${alt}" onerror="this.parentNode.removeChild(this)">`;
+  }
+  function nearbyHTML(p){
+    const here = { lat:p.lat, lon:p.lon };
+    const list = all.filter(q => q.name !== p.name)
+      .map(q => ({ q, d: haversineKm(here, {lat:q.lat, lon:q.lon}) }))
+      .sort((a,b)=>a.d-b.d).slice(0,12);
+    const items = list.map(o => `<li data-name="${o.q.name}">${CAT[o.q.cat]||'📍'} <strong>${o.q.name}</strong> — ${o.d.toFixed(2)} km • ${Math.max(1,Math.round(o.d*12))} min</li>`).join('');
+    return `<div class="nearby"><h4>Nearby (sorted by distance)</h4><ul>${items}</ul></div>`;
   }
 
   all.forEach(p => {
-    const marker = L.marker([p.lat, p.lon], { title: p.name, icon: emojiIcon(CAT[p.cat] || '📍') }).addTo(map);
-    marker.meta = p;
-    marker.category = p.cat;
-    marker.bindTooltip(`${CAT[p.cat]||'📍'} ${p.name}`, { direction:'top', className:'name-label', permanent:false, offset:[0,-6] });
+    const m=L.marker([p.lat,p.lon], { title:p.name, icon:emojiIcon(CAT[p.cat]||'📍') }).addTo(map);
+    m.category=p.cat; m.meta=p;
+    m.bindTooltip(`${CAT[p.cat]||'📍'} ${p.name}`, { direction:(window.innerWidth<768?'top':'top'), className:'name-label', permanent:false, offset:[0,-6] });
     const fromMainKm = haversineKm({lat:all[0].lat,lon:all[0].lon},{lat:p.lat,lon:p.lon});
     const ticketLine = (p.cat === 'Dining')
       ? `<div class="ticket">Reservations : <span>${p.reservationNeeded || 'check venue'}</span></div>`
@@ -279,7 +315,7 @@ function startMap(){
         <p><strong>Description:</strong> ${p.desc || '—'}</p>
         ${p.usp ? `<p><strong>USP:</strong> ${p.usp}</p>` : ''}
         <div class="meta">
-          <div><strong>From Tower:</strong><br>${fromMainKm.toFixed(2)} km • ${walkMins(fromMainKm)} min</div>
+          <div><strong>From Tower:</strong><br>${fromMainKm.toFixed(2)} km • ${Math.max(1,Math.round(fromMainKm*12))} min</div>
           <div><strong>Visit tips:</strong><br>${p.how || '—'}</div>
         </div>
         ${ticketLine}
@@ -287,80 +323,94 @@ function startMap(){
         ${ctaBtn}
         ${nearbyHTML(p)}
       </div>`;
-    marker.bindPopup(popupHTML, { maxWidth: 380, closeButton: true });
-    marker.on('click', () => { marker.openPopup(); });
-    markers.push(marker);
+    m.bindPopup(popupHTML, { maxWidth: 380, closeButton: true });
+    m.on('click', ()=> m.openPopup());
+    markers.push(m);
   });
 
-  function nearbyHTML(p){
-    const here = { lat:p.lat, lon:p.lon };
-    const list = all.filter(q => q.name !== p.name)
-      .map(q => ({ q, d: haversineKm(here, {lat:q.lat, lon:q.lon}) }))
-      .sort((a,b)=>a.d-b.d).slice(0,12);
-    const items = list.map(o => `<li data-name="${o.q.name}">${CAT[o.q.cat]||'📍'} <strong>${o.q.name}</strong> — ${o.d.toFixed(2)} km • ${walkMins(o.d)} min</li>`).join('');
-    return `<div class="nearby"><h4>Nearby (sorted by distance)</h4><ul>${items}</ul></div>`;
-  }
+  // Filtering
+  const btnRefs = {}; // cat -> [desktopBtn, mobileBtn]
+  const CAT_KEYS = Object.keys(CAT);
 
-  map.on('popupopen', (e) => {
-    const node = e.popup.getElement();
-    node.querySelectorAll('.nearby li').forEach(li => {
-      li.addEventListener('click', () => {
-        const name = li.getAttribute('data-name');
-        const target = markers.find(m => m.meta.name === name);
-        if (target){
-          map.setView(target.getLatLng(), Math.max(map.getZoom(), 16));
-          target.openPopup();
-        }
-      });
-    });
-  });
-
-  // Legend
-  const legendGrid = document.getElementById('legend-grid');
-  const btns = {};
-  Object.keys(CAT).forEach(cat => {
-    const b = document.createElement('button');
-    b.textContent = `${CAT[cat]} ${cat==='Street'?'Streets/Squares':(cat + (cat==='Museum'?'s':''))}`;
-    b.addEventListener('click', () => {
-      Object.values(btns).forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      map.closePopup();
-      const highlights = [];
-      markers.forEach(m => {
-        const on = (m.category === cat) || (m.category === 'Main' && cat === 'Main');
-        const iconEl = m.getElement();
-        if (iconEl){ iconEl.classList.toggle('hl', on); }
-        if (on){
-          m.setTooltipContent(`${CAT[m.category]||'📍'} ${m.meta.name}`);
-          m.openTooltip();
-          highlights.push(m);
-        } else {
-          if (m.isTooltipOpen()) m.closeTooltip();
-        }
-      });
-      if (highlights.length){
-        const g = L.featureGroup(highlights);
-        map.fitBounds(g.getBounds().pad(0.25));
+  function handleFilter(cat){
+    CAT_KEYS.forEach(k => btnRefs[k].forEach(b => b.classList.remove('active')));
+    btnRefs[cat].forEach(b => b.classList.add('active'));
+    map.closePopup();
+    const highlights=[];
+    markers.forEach(m => {
+      const on = (m.category===cat) || (m.category==='Main' && cat==='Main');
+      const el = m.getElement();
+      if(el) el.classList.toggle('hl', on);
+      if(on){
+        m.setTooltipContent(`${CAT[m.category]||'📍'} ${m.meta.name}`);
+        m.openTooltip();
+        highlights.push(m);
+      }else{
+        if(m.isTooltipOpen()) m.closeTooltip();
       }
     });
-    legendGrid.appendChild(b);
-    btns[cat]=b;
-  });
-
-  document.getElementById('clear').addEventListener('click', () => {
-    Object.values(btns).forEach(x=>x.classList.remove('active'));
+    if(highlights.length){
+      const g=L.featureGroup(highlights);
+      map.fitBounds(g.getBounds().pad(0.25));
+    }
+  }
+  function clearAll(){
+    CAT_KEYS.forEach(k => btnRefs[k].forEach(b => b.classList.remove('active')));
     markers.forEach(m => {
-      const iconEl = m.getElement();
-      if (iconEl) iconEl.classList.remove('hl');
-      if (m.isTooltipOpen()) m.closeTooltip();
+      const el=m.getElement(); if(el) el.classList.remove('hl');
+      if(m.isTooltipOpen()) m.closeTooltip();
     });
     map.closePopup();
+  }
+  function fitAll(){
+    const g=L.featureGroup(markers);
+    map.fitBounds(g.getBounds().pad(0.25));
+  }
+
+  // Desktop legend
+  const gridD=document.getElementById('legend-grid-desktop');
+  CAT_KEYS.forEach(cat=>{
+    const b=document.createElement('button');
+    b.textContent = `${CAT[cat]} ${cat==='Street'?'Streets/Squares':(cat + (cat==='Museum'?'s':''))}`;
+    b.addEventListener('click', ()=> handleFilter(cat));
+    gridD.appendChild(b);
+    btnRefs[cat]=(btnRefs[cat]||[]); btnRefs[cat].push(b);
+  });
+  document.getElementById('clear-desktop').addEventListener('click', clearAll);
+  document.getElementById('fit-desktop').addEventListener('click', fitAll);
+
+  // Mobile bottom sheet legend
+  const gridM=document.getElementById('legend-grid-mobile');
+  CAT_KEYS.forEach(cat=>{
+    const b=document.createElement('button');
+    b.textContent = `${CAT[cat]} ${cat==='Street'?'Streets/Squares':(cat + (cat==='Museum'?'s':''))}`;
+    b.addEventListener('click', ()=> handleFilter(cat));
+    gridM.appendChild(b);
+    btnRefs[cat].push(b);
+  });
+  document.getElementById('clear-mobile').addEventListener('click', clearAll);
+  document.getElementById('fit-mobile').addEventListener('click', fitAll);
+
+  // Mobile sheet open/close
+  const openBtn=document.getElementById('openSheet');
+  const sheet=document.getElementById('sheet');
+  openBtn.addEventListener('click', ()=>{
+    sheet.style.display='block';
+    sheet.style.maxHeight='70vh';
+  });
+  sheet.addEventListener('click', (e)=>{
+    const inner = e.target.closest('.inner');
+    if(!inner){ sheet.style.display='none'; }
   });
 
-  document.getElementById('fit').addEventListener('click', () => {
-    const g = L.featureGroup(markers);
-    map.fitBounds(g.getBounds().pad(0.25));
+  // Move zoom control on resize
+  window.addEventListener('resize', ()=>{
+    document.querySelectorAll('.leaflet-control-zoom').forEach(el=>el.remove());
+    L.control.zoom({ position: (window.innerWidth<768?'bottomright':'topleft') }).addTo(map);
   });
+
+  // Fit initially
+  fitAll();
 }
 </script>
 </body>
